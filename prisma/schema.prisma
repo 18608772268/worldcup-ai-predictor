@@ -1,0 +1,391 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Team {
+  id            String   @id @default(cuid())
+  name          String
+  nameEn        String?
+  country       String
+  countryCode   String?
+  fifaRanking   Int?
+  logoUrl       String?
+  founded       Int?
+  homeStadium   String?
+  coachName     String?
+
+  matchesPlayed Int      @default(0)
+  wins          Int      @default(0)
+  draws         Int      @default(0)
+  losses        Int      @default(0)
+  goalsFor      Int      @default(0)
+  goalsAgainst  Int      @default(0)
+  winRate       Float    @default(0)
+  drawRate      Float    @default(0)
+  lossRate      Float    @default(0)
+  avgGoalsFor   Float    @default(0)
+  avgGoalsAgainst Float  @default(0)
+
+  eloRating     Float    @default(1500)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  homeMatches   Match[]  @relation("HomeTeam")
+  awayMatches   Match[]  @relation("AwayTeam")
+  players       Player[]
+  news          NewsItem[]
+  homeStats     MatchStats[] @relation("HomeStatsTeam")
+  awayStats     MatchStats[] @relation("AwayStatsTeam")
+  teamHistory   TeamHistory[]
+
+  @@index([country])
+  @@index([fifaRanking])
+}
+
+model Player {
+  id            String   @id @default(cuid())
+  name          String
+  nameEn        String?
+  position      String
+  age           Int?
+  nationality   String?
+  teamId        String?
+  club          String?
+  jerseyNumber  Int?
+  height        Float?
+  weight        Float?
+  preferredFoot String?
+
+  injuryStatus  String?
+  injuryNote    String?
+  suspensionNote String?
+
+  goals         Int      @default(0)
+  assists       Int      @default(0)
+  appearances   Int      @default(0)
+  minutesPlayed Int      @default(0)
+  yellowCards   Int      @default(0)
+  redCards      Int      @default(0)
+
+  formRating    Float    @default(6.5)
+  seasonRating  Float    @default(6.5)
+
+  recentFormSummary String?  // 近期表现摘要（来自 Serper 搜索）
+  formSourceUrl  String?     // 数据来源链接
+  formUpdatedAt  DateTime?   // 抓取时间
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  team          Team?    @relation(fields: [teamId], references: [id])
+  news          NewsItem[]
+  playerHistory PlayerHistory[]
+
+  @@index([teamId])
+  @@index([position])
+  @@index([nationality])
+}
+
+model Match {
+  id            String   @id @default(cuid())
+  matchId       String   @unique
+  league        String
+  leagueCode    String?
+  season        String?
+  round         String?
+
+  homeTeamId    String
+  awayTeamId    String
+
+  matchTime     DateTime
+  status        String   @default("scheduled")
+
+  homeScore     Int?
+  awayScore     Int?
+  halfHomeScore Int?
+  halfAwayScore Int?
+
+  oddsWin       Float?
+  oddsDraw      Float?
+  oddsLose      Float?
+
+  handicapLine  Float?
+  oddsHandicapWin   Float?
+  oddsHandicapDraw  Float?
+  oddsHandicapLose  Float?
+
+  oddsTotalGoals2   Float?
+  oddsTotalGoals3   Float?
+  oddsTotalGoals4   Float?
+  oddsTotalGoals5   Float?
+  oddsTotalGoals6   Float?
+  oddsTotalGoals7   Float?
+
+  oddsHalfFull_WW   Float?
+  oddsHalfFull_WD   Float?
+  oddsHalfFull_WL   Float?
+  oddsHalfFull_DW   Float?
+  oddsHalfFull_DD   Float?
+  oddsHalfFull_DL   Float?
+  oddsHalfFull_LW   Float?
+  oddsHalfFull_LD   Float?
+  oddsHalfFull_LL   Float?
+
+  oddsScoreJson     String?
+
+  overUnderLine    Float?
+  oddsOver          Float?
+  oddsUnder         Float?
+
+  oddsBothYes       Float?
+  oddsBothNo        Float?
+
+  venue        String?
+  referee      String?
+  weatherNote  String?
+  sourceUrl    String?
+  rawData      String?
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  homeTeam     Team     @relation("HomeTeam", fields: [homeTeamId], references: [id])
+  awayTeam     Team     @relation("AwayTeam", fields: [awayTeamId], references: [id])
+  prediction   Prediction?
+  matchStats   MatchStats?
+  news         NewsItem[]
+  oddsHistory  OddsHistory[]
+
+  @@index([matchTime])
+  @@index([status])
+  @@index([league])
+  @@index([homeTeamId])
+  @@index([awayTeamId])
+}
+
+model MatchStats {
+  id            String   @id @default(cuid())
+  matchId       String   @unique
+  homeTeamId    String
+  awayTeamId    String
+
+  homePossession Float?
+  awayPossession Float?
+  homeShots      Int?
+  awayShots      Int?
+  homeShotsOnTarget Int?
+  awayShotsOnTarget Int?
+  homeCorners    Int?
+  awayCorners    Int?
+  homeFouls      Int?
+  awayFouls      Int?
+  homeYellowCards Int?
+  awayYellowCards Int?
+  homeRedCards   Int?
+  awayRedCards   Int?
+  homeOffsides   Int?
+  awayOffsides   Int?
+
+  homeTeam       Team    @relation("HomeStatsTeam", fields: [homeTeamId], references: [id])
+  awayTeam       Team    @relation("AwayStatsTeam", fields: [awayTeamId], references: [id])
+  match          Match   @relation(fields: [matchId], references: [id])
+
+  createdAt      DateTime @default(now())
+}
+
+model Prediction {
+  id              String   @id @default(cuid())
+  matchId         String   @unique
+
+  eloHomeWin      Float?
+  eloDraw         Float?
+  eloAwayWin      Float?
+  eloHomeExpectedGoals Float?
+  eloAwayExpectedGoals Float?
+
+  poissonHomeWin  Float?
+  poissonDraw     Float?
+  poissonAwayWin  Float?
+  poissonHomeXG   Float?
+  poissonAwayXG   Float?
+  poissonScoreJson String?
+
+  mcHomeWin       Float?
+  mcDraw          Float?
+  mcAwayWin       Float?
+  mcHomeXG        Float?
+  mcAwayXG        Float?
+  mcOver25        Float?
+  mcUnder25       Float?
+  mcBothYes       Float?
+  mcBothNo        Float?
+  mcScoreJson     String?
+  mcIterations    Int      @default(100000)
+
+  finalHomeWin    Float?
+  finalDraw       Float?
+  finalAwayWin    Float?
+  finalHomeXG     Float?
+  finalAwayXG     Float?
+  finalOver25     Float?
+  finalUnder25    Float?
+  finalBothYes    Float?
+  finalBothNo     Float?
+  finalScoreJson  String?
+
+  aiPredictedScore String?
+  aiPredictedResult String?
+  aiHalfFull       String?
+  aiAnalysis        String?
+  aiConfidence      Float?
+  aiKeyFactors      String?
+  aiPromptTokens   Int?
+  aiCompletionTokens Int?
+
+  riskScore       Float?
+  riskLevel       String?
+  riskBreakdownJson String?  // 风险评分详细分解 JSON
+  confidenceScore Float?
+  confidenceLevel String?
+
+  modelAgreement  Float?
+  dataCompleteness Float?
+
+  // 详细预测（多个比分 + 半全场 + 球队分析）
+  topScoresJson   String?    // JSON: [{score, prob, reasoning}, ...]
+  halfFullPred    String?    // 半全场预测 e.g. "胜-胜"
+  halfFullProb    Float?     // 半全场概率
+  halfFullAllJson String?    // 全部半全场组合概率 JSON
+  teamAnalysisJson String?   // JSON: {home: TeamAnalysis, away: TeamAnalysis}
+  narrative       String?    // 完整文字分析
+
+  modelVersion    String?
+  computedAt      DateTime @default(now())
+
+  match           Match    @relation(fields: [matchId], references: [id])
+
+  @@index([computedAt])
+}
+
+model NewsItem {
+  id            String   @id @default(cuid())
+  title         String
+  summary       String?
+  content       String?
+  url           String   @unique
+  source        String
+  sourceType    String   @default("rss")
+  language      String   @default("zh")
+  publishedAt   DateTime
+
+  category      String?
+  sentiment     Float?
+  importance    Int      @default(5)
+
+  teamId        String?
+  playerId      String?
+  matchId       String?
+
+  imageUrl      String?
+  tags          String?
+
+  createdAt     DateTime @default(now())
+
+  team          Team?    @relation(fields: [teamId], references: [id])
+  player        Player?  @relation(fields: [playerId], references: [id])
+  match         Match?   @relation(fields: [matchId], references: [id])
+
+  @@index([publishedAt])
+  @@index([category])
+  @@index([teamId])
+  @@index([matchId])
+}
+
+model OddsHistory {
+  id            String   @id @default(cuid())
+  matchId       String
+
+  bookmaker     String   @default("sporttery")
+  recordedAt    DateTime @default(now())
+
+  oddsWin       Float?
+  oddsDraw      Float?
+  oddsLose      Float?
+  oddsHandicapWin   Float?
+  oddsHandicapDraw  Float?
+  oddsHandicapLose  Float?
+  oddsOver      Float?
+  oddsUnder     Float?
+
+  match         Match    @relation(fields: [matchId], references: [id])
+
+  @@index([matchId])
+  @@index([recordedAt])
+}
+
+model TeamHistory {
+  id            String   @id @default(cuid())
+  teamId        String
+  matchDate     DateTime
+  opponent      String
+  isHome        Boolean
+  goalsFor      Int
+  goalsAgainst  Int
+  result        String
+  competition   String?
+  eloBefore     Float
+  eloAfter      Float
+  eloChange     Float
+
+  team          Team     @relation(fields: [teamId], references: [id])
+
+  @@index([teamId])
+  @@index([matchDate])
+}
+
+model PlayerHistory {
+  id            String   @id @default(cuid())
+  playerId      String
+  matchDate     DateTime
+  competition   String?
+  opponent      String?
+  goals         Int      @default(0)
+  assists       Int      @default(0)
+  minutesPlayed Int      @default(0)
+  rating        Float?
+  yellowCards   Int      @default(0)
+  redCards      Int      @default(0)
+
+  player        Player   @relation(fields: [playerId], references: [id])
+
+  @@index([playerId])
+  @@index([matchDate])
+}
+
+model SyncLog {
+  id            String   @id @default(cuid())
+  type          String
+  status        String
+  message       String?
+  recordsCount  Int      @default(0)
+  duration      Int?
+  errorStack    String?
+  startedAt     DateTime @default(now())
+  finishedAt    DateTime?
+
+  @@index([type])
+  @@index([startedAt])
+}
+
+model Setting {
+  key           String   @id
+  value         String
+  description   String?
+  updatedAt     DateTime @updatedAt
+}

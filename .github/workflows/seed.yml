@@ -1,0 +1,26 @@
+name: Seed (一次性初始化数据库)
+
+on:
+ workflow_dispatch:
+
+jobs:
+ seed:
+ runs-on: ubuntu-latest
+ timeout-minutes:10
+ env:
+ DATABASE_URL: ${{ secrets.DATABASE_URL }}
+ SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+
+ steps:
+ - uses: actions/checkout@v4
+ - uses: actions/setup-node@v4
+ with:
+ node-version: '20'
+ cache: 'npm'
+
+ - run: npm ci
+ - run: npx prisma db push --skip-generate
+ - run: npx prisma generate
+ - run: npm run db:seed
+ - run: npm run crawl
+ - run: npm run player-form --80

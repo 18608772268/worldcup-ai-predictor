@@ -1,0 +1,61 @@
+name: Cron Jobs
+
+on:
+ schedule:
+ # 每30 分钟同步赛程 + 生成预测
+ - cron: '*/30 * * * *'
+ # 每2 小时抓新闻
+ - cron: '0 */2 * * *'
+ # 每6 小时抓30 个球员近期表现
+ - cron: '0 */6 * * *'
+ workflow_dispatch:
+ inputs:
+ job:
+ description: 'news | player-form | sync | predict'
+ required: true
+ default: 'sync'
+ limit:
+ description: '球员抓取数量（仅 player-form）'
+ required: false
+ default: '30'
+
+jobs:
+ run:
+ runs-on: ubuntu-latest
+ timeout-minutes:20
+ env:
+ DATABASE_URL: ${{ secrets.DATABASE_URL }}
+ SERPER_API_KEY: ${{ secrets.SERPER_API_KEY }}
+ MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+ MINIMAX_BASE_URL: ${{ secrets.MINIMAX_BASE_URL }}
+ MINIMAX_MODEL: ${{ secrets.MINIMAX_MODEL }}
+ SPORTTERY_BASE_URL: ${{ secrets.SPORTTERY_BASE_URL }}
+ SPORTTERY_JC_URL: ${{ secrets.SPORTTERY_JC_URL }}
+ NEWS_RSS_FEEDS: ${{ secrets.NEWS_RSS_FEEDS }}
+
+ steps:
+ - uses: actions/checkout@v4
+ - uses: actions/setup-node@v4
+ with:
+ node-version: '20'
+ cache: 'npm'
+
+ - run: npm ci
+ - run: npx prisma generate
+
+ - name: Sync + Predict
+ if: github.event.schedule == '*/30 * * * *' || github.event.inputs.job == 'sync' || github.event.inputs.job == 'predict'
+ run: |
+ if [ "${{ github.event.inputs.job }}" = "predict" ]; then
+ npm run predict
+ else
+ npm run crawl
+ fi
+
+ - name: News
+ if: github.event.schedule == '0 */2 * * *' || github.event.inputs.job == 'news'
+ run: npm run news
+
+ - name: Player Form
+ if: github.event.schedule == '0 */6 * * *' || github.event.inputs.job == 'player-form'
+ run: npm run player-form -- ${{ github.event.inputs.limit ||30 }}
