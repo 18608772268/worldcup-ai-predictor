@@ -108,9 +108,9 @@ export async function getRiskInput(matchId: string): Promise<RiskInput> {
       recordedAt: o.recordedAt,
     })),
     currentOdds: {
-      win: match.oddsWin,
-      draw: match.oddsDraw,
-      lose: match.oddsLose,
+      win: match.oddsWin || 0,
+      draw: match.oddsDraw || 0,
+      lose: match.oddsLose || 0,
     },
     news: match.news.map((n) => ({
       sentiment: n.sentiment,

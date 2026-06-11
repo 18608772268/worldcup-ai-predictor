@@ -294,7 +294,7 @@ export class SerperCrawler {
         // 尝试获取真实赔率
         const oddsQuery = `${m.homeTeam} vs ${m.awayTeam} odds`;
         const oddsResult = await this.search(oddsQuery, 3);
-        let win: number, draw: number, lose: number;
+        let win: number | undefined, draw: number | undefined, lose: number | undefined;
         if (oddsResult?.organic) {
           const odds = this.extractOdds(oddsResult.organic);
           if (odds) {

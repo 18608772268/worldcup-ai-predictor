@@ -5,12 +5,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function formatPercent(value: number, digits = 1): string {
+export function formatPercent(value: number | null | undefined, digits = 1): string {
   if (value == null || isNaN(value)) return '-';
   return `${(value * 100).toFixed(digits)}%`;
 }
 
-export function formatFloat(value: number, digits = 2): string {
+export function formatFloat(value: number | null | undefined, digits = 2): string {
   if (value == null || isNaN(value)) return '-';
   return value.toFixed(digits);
 }

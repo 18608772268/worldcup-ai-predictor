@@ -18,12 +18,12 @@ export default async function TeamDetailPage({ params }: { params: { id: string 
       homeMatches: {
         orderBy: { matchTime: 'desc' },
         take: 10,
-        include: { awayTeam: true, prediction: true },
+        include: { homeTeam: true, awayTeam: true, prediction: true },
       },
       awayMatches: {
         orderBy: { matchTime: 'desc' },
         take: 10,
-        include: { homeTeam: true, prediction: true },
+        include: { homeTeam: true, awayTeam: true, prediction: true },
       },
       teamHistory: { orderBy: { matchDate: 'desc' }, take: 20 },
       news: { orderBy: { publishedAt: 'desc' }, take: 5 },
